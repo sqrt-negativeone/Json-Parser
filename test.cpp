@@ -1,8 +1,8 @@
+#include "json.h"
+
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-#include "json.h"
 
 // TODO(fakhri): do some profilings and optimizations, this is just a quick first implementation
 // TODO(fakhri): do some stress tests 
