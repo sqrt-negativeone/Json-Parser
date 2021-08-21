@@ -30,7 +30,7 @@ struct Json_String_t
     char *str;
     u32 length;
     
-    // IMPORANT(fakhri): sheck for bounds bfore using this!!
+    // IMPORANT(fakhri): check for bounds bfore using this!!
     char& operator[](u64 index){ return str[index]; }
 };
 
@@ -75,7 +75,7 @@ struct Json_Array_t
     Json_t **data;
     u32 size;
     
-    // IMPORANT(fakhri): sheck for bounds bfore using this!!
+    // IMPORANT(fakhri): check for bounds bfore using this!!
     Json_t* &operator[](u64 index){ return data[index]; }
 };
 
