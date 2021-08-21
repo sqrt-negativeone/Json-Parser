@@ -33,12 +33,12 @@ int main()
             auto result = parse_json(json_to_parse);
             if (result->type == JSON_OBJECT)
             {
-                Json_Object_t *json_object = result->json_object;
+                Json_Object_t &json_object = *result->json_object;
                 char key[] = "glossary";
                 Json_String_t json_string;
                 json_string.str = key;
-                json_string.length = sizeof(key) / sizeof(char);
-                Json_t *json_value = json_object->get_velue_by_key(&json_string);
+                json_string.length = sizeof(key) / sizeof(char) - 1;
+                Json_t *json_value = json_object[json_string];
                 if (json_value)
                 {
                     AssertTrue(json_value->type == JSON_OBJECT);

@@ -30,8 +30,18 @@ struct Json_String_t
     char *str;
     u32 length;
     
-    // TODO(fakhri): overload [] operator
+    // IMPORANT(fakhri): sheck for bounds bfore using this!!
+    char& operator[](u64 index){ return str[index]; }
 };
+
+b32 operator==(Json_String_t &lhs, Json_String_t &rhs)
+{
+    if (lhs.length !=rhs.length) return 0;
+    u32 i = 0;
+    u32 len = lhs.length;
+    for (i = 0; i < len && (lhs[i] == rhs[i]); ++i);
+    return (i == len);
+}
 
 //constructor
 function Json_String_t *
@@ -55,12 +65,9 @@ struct Json_Object_t
     // member functions
     void add_key_value(Json_String_t *json_key, Json_t *json_value);
     
-    Json_t *get_velue_by_key(Json_String_t *json_key);
-    // TODO(fakhri): overload operator [] to add and get item with it
+    Json_t *operator[](Json_String_t &json_key);
 };
-//constructor
-function Json_Object_t *
-make_json_object(Json_String_t json_key, Json_t json_value);
+
 
 //~ Json_Array_t
 struct Json_Array_t
@@ -68,7 +75,8 @@ struct Json_Array_t
     Json_t **data;
     u32 size;
     
-    // TODO(fakhri): overload [] operator
+    // IMPORANT(fakhri): sheck for bounds bfore using this!!
+    Json_t* &operator[](u64 index){ return data[index]; }
 };
 
 // constructor
@@ -297,16 +305,6 @@ ignore_whitespaces(char *str)
     return str;
 }
 
-
-b32 operator==(Json_String_t &lhs, Json_String_t &rhs)
-{
-    if (lhs.length !=rhs.length) return 0;
-    u32 i = 0;
-    u32 len = lhs.length;
-    for (i = 0; i < len && (lhs.str[i] == rhs.str[i]); ++i);
-    return (i == len);
-}
-
 function char *
 compare_json_str(char *json, char *pattern)
 {
@@ -373,8 +371,8 @@ make_json_string(char *begin, char *end)
     }
     *json_string = {};
     
-    json_string->length = (u32)(end - begin) + 1;
-    json_string->str = (char*) reserve_in_main_memory(json_string->length);
+    json_string->length = (u32)(end - begin);
+    json_string->str = (char*) reserve_in_main_memory(json_string->length + 1);
     
     char *json_string_current_char = json_string->str;
     for (char *current_char = begin; current_char != end; ++current_char)
@@ -392,20 +390,12 @@ make_json_string(char *begin, char *end)
 }
 
 //~Json_Object_t
-function Json_Object_t *
-make_json_object(Json_String_t json_key, Json_t json_value)
-{
-    Json_Object_t *json_object = (Json_Object_t *)reserve_in_main_memory(sizeof(Json_Object_t));
-    *json_object = {};
-    return json_object;
-}
-
 // djb2 hash function from http://www.cse.yorku.ca/~oz/hash.html
 function u32
 hash_function(Json_String_t *json_string)
 {
     u32 hash = 5381;
-    int c = 0;
+    u32 c = 0;
     
     u8 *str = (u8 *)json_string->str;
     
@@ -431,22 +421,19 @@ Json_Object_t::add_key_value(Json_String_t *json_key, Json_t *json_value)
 }
 
 Json_t *
-Json_Object_t::get_velue_by_key(Json_String_t *json_key)
+Json_Object_t::operator[](Json_String_t &json_key)
 {
-    u32 hash_value = hash_function(json_key);
-    Json_t *result = 0;
-    
+    u32 hash_value = hash_function(&json_key);
     Json_Object_Slot_t *json_item = this->slots[hash_value];
     while(json_item)
     {
-        if (*json_item->key == *json_key)
+        if (*json_item->key == json_key)
         {
-            result = json_item->value;
-            break;
+            return json_item->value;
         }
         json_item = json_item->next;
     }
-    return result;
+    return 0;
 }
 
 //~Json_Array_t
