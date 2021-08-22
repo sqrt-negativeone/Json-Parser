@@ -9,7 +9,7 @@
 
 int main()
 {
-    // NOTE(fakhri): set up the memory
+    //NOTE(fakhri): set up the memory
     {
         u64 memory_size = MB(1);
         u8 *buffer = (u8 *)malloc(memory_size);
