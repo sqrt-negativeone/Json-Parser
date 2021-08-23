@@ -29,26 +29,29 @@ int main()
         {
             fread(json_to_parse, file_size, 1, fh);
             fclose(fh); fh = 0;
-            
-            auto result = parse_json(json_to_parse);
-            if (result->type == JSON_OBJECT)
-            {
-                Json_Object_t &json_object = *result->json_object;
-                char key[] = "glossary";
-                Json_String_t json_string;
-                json_string.str = key;
-                json_string.length = sizeof(key) / sizeof(char) - 1;
-                Json_t *json_value = json_object[json_string];
-                if (json_value)
-                {
-                    AssertTrue(json_value->type == JSON_OBJECT);
-                }
-            }
-            printf("%s", json_to_parse);
+        }
+        else
+        {
+            return 1;
         }
         if (fh != NULL) fclose(fh);
     }
+    else return 1;
     
+    auto result = start_parsing_json_object(json_to_parse);
+    if (result)
+    {
+        auto glossary = (*result)[json_string_lit("glossary")];
+        if (glossary && glossary->is_object())
+        {
+            auto title = (*glossary->json_object)[json_string_lit("title")];
+            if (title && title->is_string())
+            {
+                printf("glossary->title : \"%s\"\n", title->json_string->str);
+            }
+        }
+    }
+    printf("%s", json_to_parse);
     
     return 0;
 }

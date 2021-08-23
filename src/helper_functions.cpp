@@ -1,15 +1,15 @@
 #if !defined(HELPER_FUNCTIONS_CPP) && defined(JSON_H)
 #define HELPER_FUNCTIONS_CPP
 
-//~Helper functions
-function b32
+//~Helper internals
+internal b32
 is_whitespace(char c)
 {
     constexpr char carriage_return = 13;
     return (c == ' ' || c == '\n' || c == '\t' || c == carriage_return);
 }
 
-function char *
+internal char *
 ignore_whitespaces(char *str)
 {
     
@@ -20,7 +20,7 @@ ignore_whitespaces(char *str)
     return str;
 }
 
-function char *
+internal char *
 compare_json_str(char *json, char *pattern)
 {
     while(*pattern && *pattern == *json)
@@ -35,11 +35,11 @@ compare_json_str(char *json, char *pattern)
     return json;
 }
 
-function char *
+internal char *
 compute_nested_arrays_length(char *json)
 {
     if (json == 0) return 0;
-    // NOTE(fakhri): when this function is called, *json holds '[', we need to consume that charecter befor we continue
+    // NOTE(fakhri): when this internal is called, *json holds '[', we need to consume that charecter befor we continue
     AssertTrue(*json == '[');
     consume_characater(json);
     json = ignore_whitespaces(json);

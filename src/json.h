@@ -4,28 +4,14 @@
 #define JSON_H
 
 //~general types and definitions
-using u64 = unsigned long long int;
-using u32 = unsigned int;
-using b32 = int;
-using u8 = unsigned char;
-
-#define consume_characater(str) ++(str)
-#define global static
-#define function static
-
-#define AssertBreak  (*((u32*)0) = 0x1234);
-#define AssertTrue(expr) if (!(expr)) { AssertBreak; }
-
-
-#define KB(x) ((x) << 10)
-#define MB(x) ((x) << 20)
-#define GB(x) ((x) << 30)
+#include "types.h"
 
 //~includes
 #include "memory.h"
 
 //~ forward declarations
 struct Json_t;
+typedef Json_t *Json_Ptr_t;
 
 //~ Json_String_t
 struct Json_String_t
@@ -33,21 +19,15 @@ struct Json_String_t
     char *str;
     u32 length;
     
-    // IMPORANT(fakhri): check for bounds bfore using this!!
+    // IMPORANT(fakhri): check for bounds before using this!!
     char& operator[](u64 index){ return str[index]; }
+    char& operator[](u64 index) const { return str[index]; }
 };
 
-b32 operator==(Json_String_t &lhs, Json_String_t &rhs)
-{
-    if (lhs.length !=rhs.length) return 0;
-    u32 i = 0;
-    u32 len = lhs.length;
-    for (i = 0; i < len && (lhs[i] == rhs[i]); ++i);
-    return (i == len);
-}
+typedef Json_String_t *Json_String_Ptr_t;
 
 //constructor
-function Json_String_t *
+internal Json_String_Ptr_t
 make_json_string(char *start_of_key, char *end_of_key);
 
 //~ Json_Object_t
@@ -59,38 +39,45 @@ struct Json_Object_Slot_t
     Json_Object_Slot_t *next;
 };
 
+typedef Json_Object_Slot_t *Json_Object_Slot_Ptr_t;
+
 // TODO(fakhri): try dynamic size hash table ?
 constexpr int JSON_OBJECT_HASH_SIZE = 100;
 struct Json_Object_t
 {
-    Json_Object_Slot_t *slots[JSON_OBJECT_HASH_SIZE];
+    Json_Object_Slot_Ptr_t slots[JSON_OBJECT_HASH_SIZE];
     
-    // member functions
-    void add_key_value(Json_String_t *json_key, Json_t *json_value);
+    // member internals
+    void add_key_value(Json_String_Ptr_t json_key, Json_Ptr_t json_value);
     
-    Json_t *operator[](Json_String_t &json_key);
+    Json_Ptr_t operator[](const Json_String_t &json_key);
 };
 
+typedef Json_Object_t *Json_Object_Ptr_t;
 
 //~ Json_Array_t
 struct Json_Array_t
 {
-    Json_t **data;
+    Json_Ptr_t *data;
     u32 size;
     
     // IMPORANT(fakhri): check for bounds bfore using this!!
-    Json_t* &operator[](u64 index){ return data[index]; }
+    Json_Ptr_t &operator[](u64 index){ return data[index]; }
 };
 
+typedef Json_Array_t *Json_Array_Ptr_t;
+
 // constructor
-function Json_Array_t *
+internal Json_Array_Ptr_t
 make_json_array(u32 size);
 
 //~
 struct Json_Number_t
 {
-    Json_String_t *data;
+    Json_String_Ptr_t data;
 };
+
+typedef Json_Number_t *Json_Number_Ptr_t;
 
 //~ Json_t
 
@@ -99,8 +86,7 @@ enum Json_Value_t
     JSON_OBJECT,
     JSON_ARRAY,
     JSON_STRING,
-    JSON_TRUE,
-    JSON_FALSE,
+    JSON_BOOL,
     JSON_NULL,
     JSON_NUM,
 };
@@ -109,35 +95,52 @@ struct Json_t
 {
     union
     {
-        Json_Number_t *json_number;
-        Json_String_t *json_string;
-        Json_Object_t *json_object;
-        Json_Array_t  *json_array;
+        Json_Number_Ptr_t json_number;
+        Json_String_Ptr_t json_string;
+        Json_Object_Ptr_t json_object;
+        Json_Array_Ptr_t  json_array;
+        b32               bool_value;
     };
     Json_Value_t type;
+    
+    // type verification
+    b32 is_object();
+    b32 is_array();
+    b32 is_string();
+    b32 is_number();
+    b32 is_boolean();
+    b32 is_null();
 };
 
-//constructors
-function Json_t *
-make_json_value_from_json_object(Json_Object_t *json_object);
 
-function Json_t *
-make_json_value_from_json_array(Json_Array_t *json_array);
+//- constructors 
+// @Signature : make_json_value_from_json_object (Json_Object_Ptr_t json_object);
+internal Json_Ptr_t
+JSON_VALUE_CONSTRUCTOR_DEFINE(json_object, Json_Object_Ptr_t, JSON_OBJECT)
 
-function Json_t *
-make_json_value_from_json_string(Json_String_t *json_srting);
+// @make{json_value_from_json_array (@Json_Array_Ptr_t json_array);
+internal Json_Ptr_t
+JSON_VALUE_CONSTRUCTOR_DEFINE(json_array, Json_Array_Ptr_t, JSON_ARRAY); 
 
-function Json_t *
-make_json_value_from_json_number(Json_Number_t *json_number);
+// @Signature : make_json_value_from_json_string  (Json_String_Ptr_t json_string);
+internal Json_Ptr_t
+JSON_VALUE_CONSTRUCTOR_DEFINE(json_string, Json_String_Ptr_t, JSON_STRING); 
 
-function Json_t *
-make_json_value_from_true();
+// @Signature : make_json_value_from_json_number (Json_Number_Ptr_t json_number);
+internal Json_Ptr_t
+JSON_VALUE_CONSTRUCTOR_DEFINE(json_number, Json_Number_Ptr_t, JSON_NUM);
 
-function Json_t *
-make_json_value_from_false();
+// @Signature : make_json_value_from_true ();
+internal Json_Ptr_t
+JSON_VALUE_CONSTRUCTOR_DEFINE_NO_PARAM(true,JSON_BOOL, 1);
 
-function Json_t *
-make_json_value_from_null();
+// @make{json_value_from_false ();
+internal Json_Ptr_t
+JSON_VALUE_CONSTRUCTOR_DEFINE_NO_PARAM(false, JSON_BOOL, 0);
+
+// @Signature : make_json_value_from_null ();
+internal Json_Ptr_t
+JSON_VALUE_CONSTRUCTOR_DEFINE_NO_PARAM(null, JSON_NULL, 0);
 
 //~ parsers
 struct Parse_Json_Result_t
@@ -147,20 +150,34 @@ struct Parse_Json_Result_t
     b32 valid_return;
 };
 
-function Parse_Json_Result_t
-parse_json_object(char *json);
+internal Parse_Json_Result_t
+JSON_PARSER_SIG(parse_json_object);
 
-function Parse_Json_Result_t
-parse_json_string(char *json);
+internal Parse_Json_Result_t
+JSON_PARSER_SIG(parse_json_string);
 
-function Parse_Json_Result_t
-parse_json_array(char *json);
+internal Parse_Json_Result_t
+JSON_PARSER_SIG(parse_json_array);
 
-function Parse_Json_Result_t
-parse_json_value(char *json);
+internal Parse_Json_Result_t
+JSON_PARSER_SIG(parse_json_value);
 
-function Json_t *
-parse_json(char *json);
+//~ API 
+
+//@Docs: parse the json string and return a pointer to generic json type that holds the parsed result, the actual type of the json can be queried, and then access the appropriate data, if you already know what the type of the json is then it is better to use other specific internal to get you the right type from the beginning
+//@Signature: start_parsing_json_any(char *json)
+internal Json_Ptr_t
+API_FUNCTION_DECLARE(any);
+
+//@Docs: parse json string and return a json object type 
+//@Signature: start_parsing_json_object(char *json)
+internal Json_Object_Ptr_t
+API_FUNCTION_DEFINE(object)
+
+//@Docs: parse json string and return a json array type 
+//@Signature: start_parsing_json_array(char *json)
+internal Json_Array_Ptr_t
+API_FUNCTION_DEFINE(array)
 
 //~implementation
 #include "helper_functions.cpp"

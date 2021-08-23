@@ -18,8 +18,8 @@ struct Memory_t
 
 global Memory_t global_memory = {};
 
-//~main memory functions
-function
+//~main memory internals
+internal
 void *reserve_in_main_memory(u64 bytes_to_reserve)
 {
     // TODO(fakhri): good memory alignmentas
@@ -39,10 +39,10 @@ void *reserve_in_main_memory(u64 bytes_to_reserve)
 }
 
 
-//~stack functions
+//~stack internals
 // NOTE(fakhri): the stack will keep temporare informations about the length of json arrays
 
-function
+internal
 void *reserve_in_stack(u64 bytes_to_reserve)
 {
     void *result = 0;
@@ -59,7 +59,7 @@ void *reserve_in_stack(u64 bytes_to_reserve)
     return result;
 }
 
-function
+internal
 b32 free_from_stack(u64 bytes_to_free)
 {
     b32 success = 0;
@@ -76,19 +76,19 @@ b32 free_from_stack(u64 bytes_to_free)
     return success;
 }
 
-function
+internal
 b32 is_stack_empty()
 {
     return (global_memory.bytes_reserved_in_stack_memory == 0);
 }
 
-function
+internal
 b32 clear_stack()
 {
     return free_from_stack(global_memory.bytes_reserved_in_stack_memory);
 }
 
-function
+internal
 b32 push_integer_into_stack(u32 value)
 {
     int *value_ptr = (int *)reserve_in_stack(sizeof(u32));
@@ -101,7 +101,7 @@ b32 push_integer_into_stack(u32 value)
     return success;
 }
 
-function
+internal
 b32 pop_integer_from_stack(u32 *dest)
 {
     b32 success = 0;
@@ -115,13 +115,13 @@ b32 pop_integer_from_stack(u32 *dest)
 }
 
 //~ global memory setup
-function void
+internal void
 setup_stack()
 {
     global_memory.stack_memory = global_memory.memory + global_memory.capacity;
 }
 
-function
+internal
 void setup_memory(u8 *buffer, u32 size)
 {
     global_memory.memory = buffer;
